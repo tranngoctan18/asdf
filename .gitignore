@@ -1,0 +1,6 @@
+__pycache__
+htmlcov
+.DS_Store
+/testdriven-app*
+.idea/
+*env

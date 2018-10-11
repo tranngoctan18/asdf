@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request, render_template
 from sqlalchemy import exc
 
-from project import db
+from project import db, bcrypt
 from project.api.models import User
 
 users_blueprint = Blueprint('users', __name__, template_folder='./templates')
@@ -27,10 +27,11 @@ def add_user():
 
     username = post_data.get('username')
     email = post_data.get('email')
+    password = post_data.get('password')  # new
     try:
         user = User.query.filter_by(email=email).first()
         if not user:
-            db.session.add(User(username=username, email=email))
+            db.session.add(User(username=username, email=email, password=password))
             db.session.commit()
             response_object = {
                 'status' : 'success',
@@ -40,7 +41,7 @@ def add_user():
         else:
             response_object['message'] = 'Sorry. That email already exists.'
             return jsonify(response_object), 400
-    except exc.IntegrityError as e:
+    except (exc.IntegrityError, ValueError) as e:
         db.session.rollback()
         return jsonify(response_object), 400
 
@@ -87,7 +88,8 @@ def index():
     if request.method == 'POST':
         username = request.form['username']
         email = request.form['email']
-        db.session.add(User(username=username, email=email))
+        password = request.form['password']
+        db.session.add(User(username=username, email=email, password=password))
         db.session.commit()
     users = User.query.all()
     return render_template('index.html', users=users)
